@@ -119,6 +119,42 @@ public:
             g.fillEllipse (ix - 2.5f, iy - 2.5f, 5.0f, 5.0f);
         }
     }
+
+    void drawToggleButton (juce::Graphics& g, juce::ToggleButton& btn,
+                           bool /*highlighted*/, bool /*down*/) override
+    {
+        bool  on = btn.getToggleState();
+        float bw = (float)btn.getWidth(), bh = (float)btn.getHeight();
+        float r  = bh * 0.5f;
+
+        // Track body
+        juce::Colour trackOn  { 65, 145, 210 };
+        juce::Colour trackOff { 14, 16, 26 };
+        juce::ColourGradient track (
+            on ? trackOn.brighter (0.25f) : trackOff.brighter (0.15f), 0.0f, 0.0f,
+            on ? trackOn                  : trackOff,                   0.0f, bh,   false);
+        g.setGradientFill (track);
+        g.fillRoundedRectangle (0.0f, 0.0f, bw, bh, r);
+
+        // Track border
+        g.setColour (on ? trackOn.brighter (0.4f) : juce::Colour (40, 52, 72));
+        g.drawRoundedRectangle (0.5f, 0.5f, bw - 1.0f, bh - 1.0f, r - 0.5f, 1.0f);
+
+        // Thumb
+        const float pad = 2.0f;
+        const float tD  = bh - pad * 2.0f;
+        const float tX  = on ? bw - pad - tD : pad;
+        g.setColour (on ? juce::Colours::white.withAlpha (0.95f)
+                        : juce::Colour (55, 70, 95));
+        g.fillEllipse (tX, pad, tD, tD);
+
+        // Specular highlight on thumb when on
+        if (on)
+        {
+            g.setColour (juce::Colours::white.withAlpha (0.40f));
+            g.fillEllipse (tX + tD * 0.22f, pad + tD * 0.12f, tD * 0.38f, tD * 0.38f);
+        }
+    }
 };
 
 //==============================================================================
@@ -268,7 +304,12 @@ VocalDoublerAudioProcessorEditor::VocalDoublerAudioProcessorEditor (VocalDoubler
     , timingAtt (p.apvts, "timing", timingKnob.slider)
     , widthAtt  (p.apvts, "width",  widthKnob.slider)
     , timbreAtt (p.apvts, "timbre", timbreKnob.slider)
-    , rateAtt   (p.apvts, "rate",   rateKnob.slider)
+    , rateAtt          (p.apvts, "rate",         rateKnob.slider)
+    , pitchActiveAtt   (p.apvts, "activePitch",  pitchActiveBtn)
+    , timingActiveAtt  (p.apvts, "activeTiming", timingActiveBtn)
+    , widthActiveAtt   (p.apvts, "activeWidth",  widthActiveBtn)
+    , timbreActiveAtt  (p.apvts, "activeTimbre", timbreActiveBtn)
+    , rateActiveAtt    (p.apvts, "activeRate",   rateActiveBtn)
 {
     laf = std::make_unique<VocalDoublerLookAndFeel>();
     setLookAndFeel (laf.get());
@@ -292,6 +333,18 @@ VocalDoublerAudioProcessorEditor::VocalDoublerAudioProcessorEditor (VocalDoubler
                                    "Mimics the tonal differences between two separate takes of the same performance.");
     rateKnob.slider  .setTooltip ("Modulation Rate (0.1-3.0 Hz) - Speed of the Brownian-motion pitch and timing wander. "
                                    "Slow rates (< 0.5 Hz) feel organic; faster rates add more animated movement.");
+
+    pitchActiveBtn .setTooltip ("Toggle Pitch Variation on/off");
+    timingActiveBtn.setTooltip ("Toggle Timing Offset on/off - when off, voices play in sync with dry");
+    widthActiveBtn .setTooltip ("Toggle Stereo Width on/off - when off, voices collapse to centre");
+    timbreActiveBtn.setTooltip ("Toggle Timbre Variation on/off - when off, both voices have identical EQ");
+    rateActiveBtn  .setTooltip ("Toggle Rate modulation on/off - when off, pitch wander is frozen");
+
+    addAndMakeVisible (pitchActiveBtn);
+    addAndMakeVisible (timingActiveBtn);
+    addAndMakeVisible (widthActiveBtn);
+    addAndMakeVisible (timbreActiveBtn);
+    addAndMakeVisible (rateActiveBtn);
 
     voiceDisplay = std::make_unique<VoiceFieldDisplay> (processorRef);
     addAndMakeVisible (*voiceDisplay);
@@ -494,8 +547,8 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
         }
     };
 
-    drawPanel ({ 6,  49, 470, 120 }, "MIX & SPREAD");
-    drawPanel ({ 6, 275, 470, 120 }, "VARIATION");
+    drawPanel ({ 6,  49, 470, 137 }, "MIX & SPREAD");
+    drawPanel ({ 6, 288, 470, 137 }, "VARIATION");
 
     // ── Auto Gain vertical meter ──────────────────────────────────────────────
     {
@@ -601,7 +654,7 @@ void VocalDoublerAudioProcessorEditor::resized()
     // Panel 1: y=49, title bar 15px -> knobs at y=65 (1px padding)
     // Panel 2: y=175, title bar 15px -> knobs at y=193 (3px padding)
     constexpr int kRow1Y  = 66;
-    constexpr int kRow2Y  = 292;
+    constexpr int kRow2Y  = 305;
 
     // Knob columns pinned to left 480px: centres at 80, 240, 400
     const std::array<int, 3> cx = { 80, 240, 400 };
@@ -621,7 +674,21 @@ void VocalDoublerAudioProcessorEditor::resized()
     place (timbreKnob, 1, kRow2Y);
     place (rateKnob,   2, kRow2Y);
 
-    voiceDisplay->setBounds (6, 170, 470, 104);
+    // Toggle buttons (34x14) centred under each knob label
+    constexpr int kTogW = 34, kTogH = 14;
+    const int togRow1 = kRow1Y + kKnobH + kLabelH + 2;
+    const int togRow2 = kRow2Y + kKnobH + kLabelH + 2;
+
+    // Row 1: no toggle for Mix (col 0); pitch (col 1), timing (col 2)
+    pitchActiveBtn .setBounds (cx[1] - kTogW / 2, togRow1, kTogW, kTogH);
+    timingActiveBtn.setBounds (cx[2] - kTogW / 2, togRow1, kTogW, kTogH);
+
+    // Row 2: all three
+    widthActiveBtn .setBounds (cx[0] - kTogW / 2, togRow2, kTogW, kTogH);
+    timbreActiveBtn.setBounds (cx[1] - kTogW / 2, togRow2, kTogW, kTogH);
+    rateActiveBtn  .setBounds (cx[2] - kTogW / 2, togRow2, kTogW, kTogH);
+
+    voiceDisplay->setBounds (6, 187, 470, 100);
     gainReadoutBounds = { 482, 49, 56, getHeight() - 49 };
     zoomButtonBounds  = {   8, 10, 38, 26 };
 }

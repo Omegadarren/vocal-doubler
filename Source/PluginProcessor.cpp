@@ -39,6 +39,14 @@ VocalDoublerAudioProcessor::buildLayout()
         juce::NormalisableRange<float> (0.1f, 3.0f, 0.01f, 0.5f), 0.3f,
         juce::AudioParameterFloatAttributes().withLabel ("Hz")));
 
+    // Per-effect active toggles (true = effect on, default all on)
+    using Apb = juce::AudioParameterBool;
+    layout.add (std::make_unique<Apb> ("activePitch",  "Pitch Active",  true));
+    layout.add (std::make_unique<Apb> ("activeTiming", "Timing Active", true));
+    layout.add (std::make_unique<Apb> ("activeWidth",  "Width Active",  true));
+    layout.add (std::make_unique<Apb> ("activeTimbre", "Timbre Active", true));
+    layout.add (std::make_unique<Apb> ("activeRate",   "Rate Active",   true));
+
     return layout;
 }
 
@@ -147,12 +155,25 @@ void VocalDoublerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const int numChannels = buffer.getNumChannels();
 
     // ── Read parameters ──────────────────────────────────────────────────────
-    const float amount = *apvts.getRawParameterValue ("amount") / 100.0f;
-    const float width  = *apvts.getRawParameterValue ("width")  / 100.0f;
-    const float pitch  = *apvts.getRawParameterValue ("pitch");
-    const float timing = *apvts.getRawParameterValue ("timing");
-    const float timbre = *apvts.getRawParameterValue ("timbre") / 100.0f;
-    const float rate   = *apvts.getRawParameterValue ("rate");
+    const float amount    = *apvts.getRawParameterValue ("amount") / 100.0f;
+    const float rawWidth  = *apvts.getRawParameterValue ("width")  / 100.0f;
+    const float rawPitch  = *apvts.getRawParameterValue ("pitch");
+    const float rawTiming = *apvts.getRawParameterValue ("timing");
+    const float rawTimbre = *apvts.getRawParameterValue ("timbre") / 100.0f;
+    const float rawRate   = *apvts.getRawParameterValue ("rate");
+
+    // ── Per-effect active states ──────────────────────────────────────────────
+    const bool activePitch  = *apvts.getRawParameterValue ("activePitch")  > 0.5f;
+    const bool activeTiming = *apvts.getRawParameterValue ("activeTiming") > 0.5f;
+    const bool activeWidth  = *apvts.getRawParameterValue ("activeWidth")  > 0.5f;
+    const bool activeTimbre = *apvts.getRawParameterValue ("activeTimbre") > 0.5f;
+    const bool activeRate   = *apvts.getRawParameterValue ("activeRate")   > 0.5f;
+
+    const float pitch  = activePitch  ? rawPitch  : 0.0f;
+    const float timing = activeTiming ? rawTiming : 1000.0f / static_cast<float> (sampleRate);
+    const float width  = activeWidth  ? rawWidth  : 0.0f;
+    const float timbre = activeTimbre ? rawTimbre : 0.0f;
+    const float rate   = activeRate   ? rawRate   : 0.05f;
 
     const float delaySamples = timing * static_cast<float> (sampleRate) / 1000.0f;
 

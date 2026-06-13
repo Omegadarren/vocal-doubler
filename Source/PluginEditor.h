@@ -31,7 +31,7 @@ private:
     static constexpr float kZoomFactors[]       = { 1.0f, 1.5f, 2.0f };
     static constexpr const char* kZoomLabels[]  = { "1x", "1.5x", "2x" };
     static constexpr int kBaseW = 540;
-    static constexpr int kBaseH = 395;
+    static constexpr int kBaseH = 425;
 
     juce::Rectangle<int> gainReadoutBounds;
     juce::Rectangle<int> zoomButtonBounds;
@@ -52,6 +52,14 @@ private:
     Attachment widthAtt,  timbreAtt, rateAtt;
 
     void setupKnob (LabelledKnob& lk, const juce::String& text);
+
+    // Per-effect on/off toggle buttons (not for Mix)
+    juce::ToggleButton pitchActiveBtn, timingActiveBtn;
+    juce::ToggleButton widthActiveBtn,  timbreActiveBtn, rateActiveBtn;
+
+    using BtnAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
+    BtnAttachment pitchActiveAtt, timingActiveAtt;
+    BtnAttachment widthActiveAtt,  timbreActiveAtt, rateActiveAtt;
 
     juce::TooltipWindow tooltipWindow { this, 600 };  // 600 ms delay
 

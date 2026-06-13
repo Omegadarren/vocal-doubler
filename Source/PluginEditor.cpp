@@ -296,6 +296,7 @@ VocalDoublerAudioProcessorEditor::VocalDoublerAudioProcessorEditor (VocalDoubler
     voiceDisplay = std::make_unique<VoiceFieldDisplay> (processorRef);
     addAndMakeVisible (*voiceDisplay);
 
+    zoomIndex = processorRef.editorZoomIndex;
     applyZoom();
     startTimerHz (30);
 }
@@ -555,6 +556,7 @@ void VocalDoublerAudioProcessorEditor::mouseDown (const juce::MouseEvent& e)
     if (zoomButtonBounds.contains (e.getPosition()))
     {
         zoomIndex = (zoomIndex + 1) % 3;
+        processorRef.editorZoomIndex = zoomIndex;
         applyZoom();
         repaint();
     }

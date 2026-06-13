@@ -260,6 +260,7 @@ void VocalDoublerAudioProcessor::getStateInformation (juce::MemoryBlock& destDat
 {
     auto state = apvts.copyState();
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
+    xml->setAttribute ("editorZoom", editorZoomIndex);
     copyXmlToBinary (*xml, destData);
 }
 
@@ -267,7 +268,10 @@ void VocalDoublerAudioProcessor::setStateInformation (const void* data, int size
 {
     std::unique_ptr<juce::XmlElement> xml (getXmlFromBinary (data, sizeInBytes));
     if (xml && xml->hasTagName (apvts.state.getType()))
+    {
+        editorZoomIndex = juce::jlimit (0, 2, xml->getIntAttribute ("editorZoom", 0));
         apvts.replaceState (juce::ValueTree::fromXml (*xml));
+    }
 }
 
 //==============================================================================

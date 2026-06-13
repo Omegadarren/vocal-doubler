@@ -71,6 +71,9 @@ public:
         return 20.0f * std::log10 (juce::jmax (gainTrim, 1.0e-6f));
     }
 
+    // Editor zoom level (0=1x, 1=1.5x, 2=2x) — persisted with plugin state
+    int editorZoomIndex = 0;
+
 private:
     //==========================================================================
     // Delay buffer  (mono, max 300 ms)

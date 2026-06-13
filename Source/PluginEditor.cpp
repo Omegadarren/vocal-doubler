@@ -435,10 +435,39 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
     g.setColour (kAccent);
     g.fillRect (0, 47, w, 2);
 
-    // Plugin title
-    g.setColour (kTextMain);
-    g.setFont (juce::Font ("Arial", 22.0f, juce::Font::bold));
-    g.drawText ("VOCAL DOUBLER", 0, 0, w, 48, juce::Justification::centred, false);
+    // Plugin title — two-tone with gradient fill and emboss shadow
+    {
+        juce::Font titleFont ("Arial", 22.0f, juce::Font::bold);
+        g.setFont (titleFont);
+
+        const juce::String wordA = "VOCAL";
+        const juce::String wordB = " DOUBLER";
+        const int totalW = titleFont.getStringWidth (wordA + wordB);
+        const int startX = (w - totalW) / 2;
+        const int titleY = 0;
+        const int titleH = 48;
+        const int wA = titleFont.getStringWidth (wordA);
+
+        // Soft shadow pass (both words, offset 1px down)
+        g.setColour (juce::Colour (0, 0, 0).withAlpha (0.55f));
+        g.drawText (wordA + wordB, startX + 1, titleY + 2, totalW + 2, titleH,
+                    juce::Justification::centredLeft, false);
+
+        // "VOCAL" — slightly dimmed, standard weight feel
+        g.setColour (kTextMain.withAlpha (0.72f));
+        g.drawText (wordA, startX, titleY, wA, titleH,
+                    juce::Justification::centredLeft, false);
+
+        // "DOUBLER" — accent colour with a subtle glow pass behind it
+        g.setColour (kAccent.withAlpha (0.20f));
+        g.setFont (juce::Font ("Arial", 24.0f, juce::Font::bold));
+        g.drawText (wordB, startX + wA - 1, titleY, totalW - wA + 4, titleH,
+                    juce::Justification::centredLeft, false);
+        g.setColour (kAccent.brighter (0.25f));
+        g.setFont (titleFont);
+        g.drawText (wordB, startX + wA, titleY, totalW - wA + 2, titleH,
+                    juce::Justification::centredLeft, false);
+    }
 
     // ── Logo icon — dual sine waves in a pill (top-right of header) ───────────
     {

@@ -356,6 +356,11 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
     g.setFont (juce::Font ("Arial", 22.0f, juce::Font::bold));
     g.drawText ("VOCAL DOUBLER", 0, 0, w, 48, juce::Justification::centred, false);
 
+    // Version — bottom-right of header
+    g.setFont (juce::Font (9.5f, juce::Font::bold));
+    g.setColour (kTextDim.withAlpha (0.70f));
+    g.drawText ("v1.7", w - 52, 32, 46, 13, juce::Justification::centredRight, false);
+
     // ── Zoom button (top-left of header) ───────────────────────────────────────────
     {
         const bool hovered = zoomButtonBounds.contains (

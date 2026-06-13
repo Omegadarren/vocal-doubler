@@ -315,7 +315,14 @@ constexpr const char* VocalDoublerAudioProcessorEditor::kZoomLabels[];
 void VocalDoublerAudioProcessorEditor::applyZoom()
 {
     setSize (kBaseW, kBaseH);
-    setScaleFactor (kZoomFactors[zoomIndex]);
+    if (isShowing())
+        setScaleFactor (kZoomFactors[zoomIndex]);
+}
+
+void VocalDoublerAudioProcessorEditor::visibilityChanged()
+{
+    if (isVisible())
+        setScaleFactor (kZoomFactors[zoomIndex]);
 }
 
 //==============================================================================

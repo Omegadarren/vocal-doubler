@@ -13,6 +13,7 @@ public:
     void paint     (juce::Graphics&) override;
     void resized   () override;
     void mouseDown (const juce::MouseEvent&) override;
+    void visibilityChanged() override;
 
 private:
     void timerCallback() override { repaint (gainReadoutBounds); }

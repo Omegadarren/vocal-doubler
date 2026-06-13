@@ -514,7 +514,7 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
     g.setColour (kTextDim.withAlpha (0.70f));
     g.drawText ("v1.7", w - 92, 34, 40, 12, juce::Justification::centredRight, false);
 
-    // ── Zoom button (top-left of header) ───────────────────────────────────────────
+    // ── Zoom button (top-left of header) ────────────────────────────────────
     {
         const bool hovered = zoomButtonBounds.contains (
                                  getMouseXYRelative().toInt());
@@ -526,6 +526,20 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
         g.setFont (juce::Font (10.0f, juce::Font::bold));
         g.drawText (kZoomLabels[zoomIndex],
                     zoomButtonBounds, juce::Justification::centred, false);
+    }
+
+    // ── Tooltip toggle button (next to zoom, top-left) ────────────────────────
+    {
+        const bool hovered = tooltipBtnBounds.contains (getMouseXYRelative().toInt());
+        juce::Colour btnCol = tooltipsEnabled ? kAccent.withAlpha (0.55f)
+                                              : juce::Colour (0, 0, 0).withAlpha (0.30f);
+        if (hovered) btnCol = btnCol.brighter (0.3f);
+        g.setColour (btnCol);
+        g.fillRoundedRectangle (tooltipBtnBounds.toFloat(), 5.0f);
+        g.setColour (tooltipsEnabled ? kTextMain : kTextDim.withAlpha (0.55f));
+        g.drawRoundedRectangle (tooltipBtnBounds.toFloat().reduced (0.5f), 5.0f, 1.0f);
+        g.setFont (juce::Font (9.0f, juce::Font::bold));
+        g.drawText ("TIP", tooltipBtnBounds, juce::Justification::centred, false);
     }
 
     // ── Section panels (recessed, with drop shadows + title bars) ───────────
@@ -714,6 +728,7 @@ void VocalDoublerAudioProcessorEditor::resized()
     voiceDisplay->setBounds (6, 187, 470, 100);
     gainReadoutBounds = { 482, 49, 56, getHeight() - 49 };
     zoomButtonBounds  = {   8, 10, 38, 26 };
+    tooltipBtnBounds  = {  52, 10, 32, 26 };
 }
 
 //==============================================================================
@@ -724,6 +739,12 @@ void VocalDoublerAudioProcessorEditor::mouseDown (const juce::MouseEvent& e)
         zoomIndex = (zoomIndex + 1) % 3;
         processorRef.editorZoomIndex = zoomIndex;
         applyZoom();
+        repaint();
+    }
+    else if (tooltipBtnBounds.contains (e.getPosition()))
+    {
+        tooltipsEnabled = !tooltipsEnabled;
+        tooltipWindow.setMillisecondsBeforeTipAppears (tooltipsEnabled ? 600 : 1000000);
         repaint();
     }
 }

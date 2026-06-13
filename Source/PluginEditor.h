@@ -36,6 +36,9 @@ private:
 
     juce::Rectangle<int> gainReadoutBounds;
     juce::Rectangle<int> zoomButtonBounds;
+    juce::Rectangle<int> tooltipBtnBounds;
+
+    bool tooltipsEnabled = true;
 
     //==========================================================================
     struct LabelledKnob

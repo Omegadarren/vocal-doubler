@@ -364,10 +364,79 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
     g.setFont (juce::Font ("Arial", 22.0f, juce::Font::bold));
     g.drawText ("VOCAL DOUBLER", 0, 0, w, 48, juce::Justification::centred, false);
 
-    // Version — bottom-right of header
+    // ── Logo icon — dual sine waves in a pill (top-right of header) ───────────
+    {
+        const float ix = (float)(w - 46);
+        const float iy = 5.0f;
+        const float iw = 38.0f, ih = 38.0f;
+        const float icy = iy + ih * 0.5f;
+
+        // Background gradient
+        juce::ColourGradient ibg (
+            juce::Colour (10, 16, 30), ix,        iy,
+            juce::Colour (4,   8, 16), ix, iy + ih, false);
+        g.setGradientFill (ibg);
+        g.fillRoundedRectangle (ix, iy, iw, ih, 7.0f);
+
+        // Inner highlight top edge
+        g.setColour (juce::Colour (255, 255, 255).withAlpha (0.06f));
+        g.fillRoundedRectangle (ix + 1.0f, iy + 1.0f, iw - 2.0f, 1.5f, 0.75f);
+
+        // Border with accent glow
+        g.setColour (kAccent.withAlpha (0.35f));
+        g.drawRoundedRectangle (ix + 0.5f, iy + 0.5f, iw - 1.0f, ih - 1.0f, 6.5f, 1.0f);
+
+        // Clip wave paths to icon interior
+        g.saveState();
+        juce::Path clipR;
+        clipR.addRoundedRectangle (ix + 1.5f, iy + 1.5f, iw - 3.0f, ih - 3.0f, 6.0f);
+        g.reduceClipRegion (clipR);
+
+        // Build two sine wave paths (one full cycle each, phase offset for separation)
+        const int   kSteps = 64;
+        const float wPad   = 5.0f;
+        const float amp    = ih * 0.22f;
+
+        auto makeWave = [&] (float phase) -> juce::Path
+        {
+            juce::Path p;
+            for (int i = 0; i <= kSteps; ++i)
+            {
+                float t  = (float)i / (float)kSteps;
+                float wx = ix + wPad + t * (iw - wPad * 2.0f);
+                float wy = icy - amp * std::sin (t * juce::MathConstants<float>::twoPi + phase);
+                if (i == 0) p.startNewSubPath (wx, wy);
+                else        p.lineTo (wx, wy);
+            }
+            return p;
+        };
+
+        auto wave1 = makeWave (0.0f);     // V1 — blue
+        auto wave2 = makeWave (1.15f);    // V2 — amber, ~66 deg phase ahead
+
+        // Soft glow passes
+        g.setColour (juce::Colour (65, 145, 210).withAlpha (0.22f));
+        g.strokePath (wave1, juce::PathStrokeType (4.5f,
+            juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        g.setColour (juce::Colour (210, 163, 65).withAlpha (0.22f));
+        g.strokePath (wave2, juce::PathStrokeType (4.5f,
+            juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+
+        // Crisp main lines
+        g.setColour (juce::Colour (65, 145, 210).withAlpha (0.92f));
+        g.strokePath (wave1, juce::PathStrokeType (1.7f,
+            juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        g.setColour (juce::Colour (210, 163, 65).withAlpha (0.92f));
+        g.strokePath (wave2, juce::PathStrokeType (1.7f,
+            juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+
+        g.restoreState();
+    }
+
+    // Version — just left of logo icon
     g.setFont (juce::Font (9.5f, juce::Font::bold));
     g.setColour (kTextDim.withAlpha (0.70f));
-    g.drawText ("v1.7", w - 52, 32, 46, 13, juce::Justification::centredRight, false);
+    g.drawText ("v1.7", w - 92, 34, 40, 12, juce::Justification::centredRight, false);
 
     // ── Zoom button (top-left of header) ───────────────────────────────────────────
     {

@@ -280,17 +280,17 @@ VocalDoublerAudioProcessorEditor::VocalDoublerAudioProcessorEditor (VocalDoubler
     setupKnob (timbreKnob, "Timbre Var");
     setupKnob (rateKnob,   "Rate");
 
-    amountKnob.slider.setTooltip ("Mix (0-100%)  —  Blend of the doubled voices into the output. "
+    amountKnob.slider.setTooltip ("Mix (0-100%) - Blend of the doubled voices into the output. "
                                    "At 0% only the dry signal passes through; at 100% you hear the full doubling effect.");
-    pitchKnob.slider .setTooltip ("Pitch Variation (0-50 cents)  —  Maximum random pitch wander applied independently to each voice. "
+    pitchKnob.slider .setTooltip ("Pitch Variation (0-50 cents) - Maximum random pitch wander applied independently to each voice. "
                                    "Low values add subtle humanisation; high values give a wide, detuned chorus character.");
-    timingKnob.slider.setTooltip ("Timing Offset (10-60 ms)  —  Delay between the two phantom voices and the dry signal. "
+    timingKnob.slider.setTooltip ("Timing Offset (10-60 ms) - Delay between the two phantom voices and the dry signal. "
                                    "Short values (10-20 ms) feel tight and natural; longer values push toward slapback echo.");
-    widthKnob.slider .setTooltip ("Stereo Width (0-100%)  —  How far apart the two voices are panned in the stereo field. "
+    widthKnob.slider .setTooltip ("Stereo Width (0-100%) - How far apart the two voices are panned in the stereo field. "
                                    "At 0% both voices are centred (mono-safe); at 100% they sit hard left and right.");
-    timbreKnob.slider.setTooltip ("Timbre Variation (0-100%)  —  Random high/low shelf EQ variation applied to each voice. "
+    timbreKnob.slider.setTooltip ("Timbre Variation (0-100%) - Random high/low shelf EQ variation applied to each voice. "
                                    "Mimics the tonal differences between two separate takes of the same performance.");
-    rateKnob.slider  .setTooltip ("Modulation Rate (0.1-3.0 Hz)  —  Speed of the Brownian-motion pitch and timing wander. "
+    rateKnob.slider  .setTooltip ("Modulation Rate (0.1-3.0 Hz) - Speed of the Brownian-motion pitch and timing wander. "
                                    "Slow rates (< 0.5 Hz) feel organic; faster rates add more animated movement.");
 
     voiceDisplay = std::make_unique<VoiceFieldDisplay> (processorRef);

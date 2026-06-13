@@ -557,16 +557,10 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
                     zoomButtonBounds, juce::Justification::centred, false);
     }
 
-    // ── Tooltip toggle ("Tool Tips" label + small checkbox pill) ─────────────
+    // ── Tooltip toggle (pill + "Tool Tips" label to its right) ─────────────
     {
-        const auto& tb = tooltipBtnBounds;   // just the 16x16 pill
+        const auto& tb = tooltipBtnBounds;
         const bool hovered = tb.contains (getMouseXYRelative().toInt());
-
-        // Label text to the left of the pill
-        g.setFont (juce::Font (9.5f, juce::Font::bold));
-        g.setColour ((tooltipsEnabled ? kTextDim : kTextDim.withAlpha (0.40f)));
-        g.drawText ("Tool Tips", tb.getX() - 58, tb.getY(), 56, tb.getHeight(),
-                    juce::Justification::centredRight, false);
 
         // Pill background
         juce::Colour pillBg = tooltipsEnabled
@@ -582,7 +576,7 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
                                 (float)tb.getHeight() * 0.5f - 0.5f, 1.0f);
 
         // Thumb dot
-        const float pad = 2.5f;
+        const float pad = 2.0f;
         const float tD  = (float)tb.getHeight() - pad * 2.0f;
         const float tX  = tooltipsEnabled
             ? (float)tb.getRight()  - pad - tD
@@ -596,6 +590,12 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
             g.fillEllipse (tX + tD * 0.20f, (float)tb.getY() + pad + tD * 0.12f,
                            tD * 0.40f, tD * 0.40f);
         }
+
+        // "Tool Tips" label to the right of the pill
+        g.setFont (juce::Font (9.5f, juce::Font::bold));
+        g.setColour (tooltipsEnabled ? kTextDim : kTextDim.withAlpha (0.40f));
+        g.drawText ("Tool Tips", tb.getRight() + 4, tb.getY() - 1, 56, tb.getHeight() + 2,
+                    juce::Justification::centredLeft, false);
     }
 
     // ── Section panels (recessed, with drop shadows + title bars) ───────────
@@ -784,8 +784,7 @@ void VocalDoublerAudioProcessorEditor::resized()
     voiceDisplay->setBounds (6, 187, 470, 100);
     gainReadoutBounds = { 482, 49, 56, getHeight() - 49 };
     zoomButtonBounds  = {   8, 10, 38, 26 };
-    // tooltip pill: 28x16, placed right-of-centre in header, well away from zoom
-    tooltipBtnBounds  = { getWidth() / 2 + 120, 16, 28, 16 };
+    tooltipBtnBounds  = {  52, 17, 26, 14 };  // pill sits right of zoom button
 }
 
 //==============================================================================

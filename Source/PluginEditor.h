@@ -16,8 +16,9 @@ public:
     void visibilityChanged() override;
 
 private:
-    void timerCallback() override { repaint (gainReadoutBounds); }
+    void timerCallback() override;
     void applyZoom();
+    void updateKnobDimming();
 
     VocalDoublerAudioProcessor& processorRef;
 

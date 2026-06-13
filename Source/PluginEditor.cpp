@@ -362,6 +362,29 @@ VocalDoublerAudioProcessorEditor::~VocalDoublerAudioProcessorEditor()
 }
 
 //==============================================================================
+void VocalDoublerAudioProcessorEditor::timerCallback()
+{
+    repaint (gainReadoutBounds);
+    updateKnobDimming();
+}
+
+void VocalDoublerAudioProcessorEditor::updateKnobDimming()
+{
+    auto dim = [](LabelledKnob& lk, bool active)
+    {
+        float a = active ? 1.0f : 0.38f;
+        lk.slider.setAlpha (a);
+        lk.label .setAlpha (a);
+    };
+    auto& avts = processorRef.apvts;
+    dim (pitchKnob,  *avts.getRawParameterValue ("activePitch")  > 0.5f);
+    dim (timingKnob, *avts.getRawParameterValue ("activeTiming") > 0.5f);
+    dim (widthKnob,  *avts.getRawParameterValue ("activeWidth")  > 0.5f);
+    dim (timbreKnob, *avts.getRawParameterValue ("activeTimbre") > 0.5f);
+    dim (rateKnob,   *avts.getRawParameterValue ("activeRate")   > 0.5f);
+}
+
+//==============================================================================
 constexpr float VocalDoublerAudioProcessorEditor::kZoomFactors[];
 constexpr const char* VocalDoublerAudioProcessorEditor::kZoomLabels[];
 

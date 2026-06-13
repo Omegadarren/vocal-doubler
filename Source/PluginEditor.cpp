@@ -528,18 +528,45 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
                     zoomButtonBounds, juce::Justification::centred, false);
     }
 
-    // ── Tooltip toggle button (next to zoom, top-left) ────────────────────────
+    // ── Tooltip toggle ("Tool Tips" label + small checkbox pill) ─────────────
     {
-        const bool hovered = tooltipBtnBounds.contains (getMouseXYRelative().toInt());
-        juce::Colour btnCol = tooltipsEnabled ? kAccent.withAlpha (0.55f)
-                                              : juce::Colour (0, 0, 0).withAlpha (0.30f);
-        if (hovered) btnCol = btnCol.brighter (0.3f);
-        g.setColour (btnCol);
-        g.fillRoundedRectangle (tooltipBtnBounds.toFloat(), 5.0f);
-        g.setColour (tooltipsEnabled ? kTextMain : kTextDim.withAlpha (0.55f));
-        g.drawRoundedRectangle (tooltipBtnBounds.toFloat().reduced (0.5f), 5.0f, 1.0f);
-        g.setFont (juce::Font (9.0f, juce::Font::bold));
-        g.drawText ("TIP", tooltipBtnBounds, juce::Justification::centred, false);
+        const auto& tb = tooltipBtnBounds;   // just the 16x16 pill
+        const bool hovered = tb.contains (getMouseXYRelative().toInt());
+
+        // Label text to the left of the pill
+        g.setFont (juce::Font (9.5f, juce::Font::bold));
+        g.setColour ((tooltipsEnabled ? kTextDim : kTextDim.withAlpha (0.40f)));
+        g.drawText ("Tool Tips", tb.getX() - 58, tb.getY(), 56, tb.getHeight(),
+                    juce::Justification::centredRight, false);
+
+        // Pill background
+        juce::Colour pillBg = tooltipsEnabled
+            ? kAccent.withAlpha (hovered ? 0.75f : 0.55f)
+            : juce::Colour (20, 22, 36).withAlpha (hovered ? 0.80f : 0.60f);
+        g.setColour (pillBg);
+        g.fillRoundedRectangle (tb.toFloat(), (float)tb.getHeight() * 0.5f);
+
+        // Pill border
+        g.setColour (tooltipsEnabled ? kAccent.withAlpha (0.80f)
+                                     : kDivider.withAlpha (0.50f));
+        g.drawRoundedRectangle (tb.toFloat().reduced (0.5f),
+                                (float)tb.getHeight() * 0.5f - 0.5f, 1.0f);
+
+        // Thumb dot
+        const float pad = 2.5f;
+        const float tD  = (float)tb.getHeight() - pad * 2.0f;
+        const float tX  = tooltipsEnabled
+            ? (float)tb.getRight()  - pad - tD
+            : (float)tb.getX()      + pad;
+        g.setColour (tooltipsEnabled ? juce::Colours::white.withAlpha (0.95f)
+                                     : juce::Colour (55, 70, 95));
+        g.fillEllipse (tX, (float)tb.getY() + pad, tD, tD);
+        if (tooltipsEnabled)
+        {
+            g.setColour (juce::Colours::white.withAlpha (0.35f));
+            g.fillEllipse (tX + tD * 0.20f, (float)tb.getY() + pad + tD * 0.12f,
+                           tD * 0.40f, tD * 0.40f);
+        }
     }
 
     // ── Section panels (recessed, with drop shadows + title bars) ───────────
@@ -728,7 +755,8 @@ void VocalDoublerAudioProcessorEditor::resized()
     voiceDisplay->setBounds (6, 187, 470, 100);
     gainReadoutBounds = { 482, 49, 56, getHeight() - 49 };
     zoomButtonBounds  = {   8, 10, 38, 26 };
-    tooltipBtnBounds  = {  52, 10, 32, 26 };
+    // tooltip pill: 28x16, placed right-of-centre in header, well away from zoom
+    tooltipBtnBounds  = { getWidth() / 2 + 120, 16, 28, 16 };
 }
 
 //==============================================================================

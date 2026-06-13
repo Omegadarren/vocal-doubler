@@ -1,0 +1,26 @@
+# Build output
+build/
+
+# JUCE fetched dependency (large, re-downloaded on first build)
+_deps/
+
+# Visual Studio
+*.user
+*.suo
+.vs/
+*.VC.opendb
+*.VC.db
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# VST3 artefacts (installed separately)
+*.vst3

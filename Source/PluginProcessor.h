@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <JuceHeader.h>
 #include <random>
 #include <array>
@@ -72,7 +72,7 @@ public:
     }
 
     // Editor zoom level (0=1x, 1=1.5x, 2=2x) — persisted with plugin state
-    int editorZoomIndex = 0;
+    int editorZoomIndex = 1;
 
 private:
     //==========================================================================

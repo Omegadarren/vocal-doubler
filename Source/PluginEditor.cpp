@@ -1,161 +1,19 @@
-#include "PluginEditor.h"
+﻿#include "PluginEditor.h"
+#include "Ui/PlateLookAndFeel.h"
 
 //==============================================================================
 // Colour palette
-static const juce::Colour kBg       {  20,  21,  32 };
-static const juce::Colour kPanel    {  14,  15,  24 };
-static const juce::Colour kHeader   {  22,  54,  98 };
-static const juce::Colour kAccent   {  65, 145, 210 };
-static const juce::Colour kTextMain { 225, 238, 255 };
-static const juce::Colour kTextDim  { 115, 152, 195 };
-static const juce::Colour kDivider  {  48,  82, 124 };
+using T = PlateUi::Theme;
+static const juce::Colour kBg       = T::background();
+static const juce::Colour kPanel    = T::surface();
+static const juce::Colour kHeader   = T::surfaceRaised();
+static const juce::Colour kAccent   = T::accent();
+static const juce::Colour kTextMain = T::text();
+static const juce::Colour kTextDim  = T::textDim();
+static const juce::Colour kDivider  = T::border();
 
-//==============================================================================
-// Custom LookAndFeel: polished metallic rotary knobs
-class VocalDoublerLookAndFeel final : public juce::LookAndFeel_V4
-{
-public:
-    VocalDoublerLookAndFeel()
-    {
-        setColour (juce::Slider::textBoxTextColourId,       juce::Colour (115, 152, 195));
-        setColour (juce::Slider::textBoxOutlineColourId,    juce::Colours::transparentBlack);
-        setColour (juce::Slider::textBoxBackgroundColourId, juce::Colours::transparentBlack);
-        setColour (juce::Label::textColourId,               juce::Colour (115, 152, 195));
-    }
-
-    void drawRotarySlider (juce::Graphics& g,
-                           int x, int y, int width, int height,
-                           float sliderPos,
-                           float startAngle, float endAngle,
-                           juce::Slider&) override
-    {
-        const float cx = (float)x + (float)width  * 0.5f;
-        const float cy = (float)y + (float)height * 0.5f;
-        const float r  = juce::jmin ((float)width, (float)height) * 0.5f - 5.0f;
-        if (r < 4.0f) return;
-
-        // Drop shadow (3 soft layers)
-        for (int i = 3; i >= 1; --i)
-        {
-            float ex = r + (float)i * 2.2f;
-            g.setColour (juce::Colour (0, 0, 0).withAlpha (0.055f * (float)(4 - i)));
-            g.fillEllipse (cx - ex + (float)i * 0.4f,
-                           cy - ex + (float)i * 1.0f,
-                           ex * 2.0f, ex * 2.0f);
-        }
-
-        // Outer bezel ring (dark metallic)
-        {
-            float bR = r + 1.5f;
-            juce::ColourGradient bezel (
-                juce::Colour (78, 82, 108), cx, cy - bR,
-                juce::Colour (14, 14, 24),  cx, cy + bR, false);
-            g.setGradientFill (bezel);
-            g.fillEllipse (cx - bR, cy - bR, bR * 2.0f, bR * 2.0f);
-        }
-
-        // Arc track (dark background)
-        {
-            juce::Path track;
-            track.addCentredArc (cx, cy, r - 2.5f, r - 2.5f, 0.0f,
-                                 startAngle, endAngle, true);
-            g.setColour (juce::Colour (18, 20, 32));
-            g.strokePath (track, juce::PathStrokeType (3.5f,
-                juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-        }
-
-        // Value arc (blue glow + solid)
-        const float valAngle = startAngle + sliderPos * (endAngle - startAngle);
-        if (sliderPos > 0.005f)
-        {
-            juce::Path arc;
-            arc.addCentredArc (cx, cy, r - 2.5f, r - 2.5f, 0.0f,
-                               startAngle, valAngle, true);
-            // soft glow pass
-            g.setColour (juce::Colour (65, 145, 210).withAlpha (0.22f));
-            g.strokePath (arc, juce::PathStrokeType (6.5f,
-                juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-            // main arc with gradient
-            juce::ColourGradient arcG (
-                juce::Colour (115, 190, 255), cx - (r - 2.5f), cy,
-                juce::Colour ( 38, 108, 200), cx + (r - 2.5f), cy, false);
-            g.setGradientFill (arcG);
-            g.strokePath (arc, juce::PathStrokeType (3.5f,
-                juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-        }
-
-        // Knob face
-        {
-            float fR = r - 5.0f;
-            juce::ColourGradient face (
-                juce::Colour (62, 65, 84), cx - fR * 0.35f, cy - fR * 0.45f,
-                juce::Colour (20, 20, 32), cx + fR * 0.25f, cy + fR * 0.55f, false);
-            g.setGradientFill (face);
-            g.fillEllipse (cx - fR, cy - fR, fR * 2.0f, fR * 2.0f);
-
-            // Subtle inner rim
-            g.setColour (juce::Colour (255, 255, 255).withAlpha (0.06f));
-            g.drawEllipse (cx - fR + 0.5f, cy - fR + 0.5f,
-                           fR * 2.0f - 1.0f, fR * 2.0f - 1.0f, 1.0f);
-
-            // Gloss highlight (top arc)
-            {
-                juce::ColourGradient gloss (
-                    juce::Colour (255, 255, 255).withAlpha (0.18f), cx, cy - fR,
-                    juce::Colour (255, 255, 255).withAlpha (0.0f),  cx, cy - fR * 0.2f, false);
-                g.setGradientFill (gloss);
-                juce::Path gp;
-                gp.addEllipse (cx - fR * 0.62f, cy - fR, fR * 1.24f, fR * 0.6f);
-                g.fillPath (gp);
-            }
-
-            // Indicator dot (glow + core)
-            float dist = fR * 0.6f;
-            float ix = cx + dist * std::sin (valAngle);
-            float iy = cy - dist * std::cos (valAngle);
-            g.setColour (juce::Colour (65, 145, 210).withAlpha (0.55f));
-            g.fillEllipse (ix - 4.5f, iy - 4.5f, 9.0f, 9.0f);
-            g.setColour (juce::Colour (212, 234, 255));
-            g.fillEllipse (ix - 2.5f, iy - 2.5f, 5.0f, 5.0f);
-        }
-    }
-
-    void drawToggleButton (juce::Graphics& g, juce::ToggleButton& btn,
-                           bool /*highlighted*/, bool /*down*/) override
-    {
-        bool  on = btn.getToggleState();
-        float bw = (float)btn.getWidth(), bh = (float)btn.getHeight();
-        float r  = bh * 0.5f;
-
-        // Track body
-        juce::Colour trackOn  { 65, 145, 210 };
-        juce::Colour trackOff { 14, 16, 26 };
-        juce::ColourGradient track (
-            on ? trackOn.brighter (0.25f) : trackOff.brighter (0.15f), 0.0f, 0.0f,
-            on ? trackOn                  : trackOff,                   0.0f, bh,   false);
-        g.setGradientFill (track);
-        g.fillRoundedRectangle (0.0f, 0.0f, bw, bh, r);
-
-        // Track border
-        g.setColour (on ? trackOn.brighter (0.4f) : juce::Colour (40, 52, 72));
-        g.drawRoundedRectangle (0.5f, 0.5f, bw - 1.0f, bh - 1.0f, r - 0.5f, 1.0f);
-
-        // Thumb
-        const float pad = 2.0f;
-        const float tD  = bh - pad * 2.0f;
-        const float tX  = on ? bw - pad - tD : pad;
-        g.setColour (on ? juce::Colours::white.withAlpha (0.95f)
-                        : juce::Colour (55, 70, 95));
-        g.fillEllipse (tX, pad, tD, tD);
-
-        // Specular highlight on thumb when on
-        if (on)
-        {
-            g.setColour (juce::Colours::white.withAlpha (0.40f));
-            g.fillEllipse (tX + tD * 0.22f, pad + tD * 0.12f, tD * 0.38f, tD * 0.38f);
-        }
-    }
-};
+// Use the shared warm-dark PlateLookAndFeel
+using VocalDoublerLookAndFeel = PlateUi::PlateLookAndFeel;
 
 //==============================================================================
 // Voice Field Display — real-time oscilloscope.
@@ -398,7 +256,16 @@ void VocalDoublerAudioProcessorEditor::applyZoom()
 void VocalDoublerAudioProcessorEditor::visibilityChanged()
 {
     if (isVisible())
+    {
         setScaleFactor (kZoomFactors[zoomIndex]);
+        if (! centred)
+        {
+            centred = true;
+            if (auto* tlw = getTopLevelComponent(); tlw != this)
+                if (auto* d = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay())
+                    tlw->setCentrePosition (d->userArea.getCentre());
+        }
+    }
 }
 
 //==============================================================================
@@ -418,143 +285,39 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
     const int w = getWidth(), h = getHeight();
 
     // ── Background ───────────────────────────────────────────────────────────
-    g.fillAll (kBg);
-
-    // Subtle top-to-bottom gradient overlay
-    juce::ColourGradient grad (kBg.brighter (0.08f), (float)w * 0.5f,  0.0f,
-                               kBg.darker   (0.05f), (float)w * 0.5f, (float)h,
-                               false);
-    g.setGradientFill (grad);
-    g.fillRect (getLocalBounds());
+    PlateUi::drawBackground (g, getLocalBounds(), true);
 
     // ── Header bar ───────────────────────────────────────────────────────────
-    g.setColour (kHeader);
-    g.fillRoundedRectangle (0.0f, 0.0f, (float)w, 48.0f, 0.0f);
+    PlateUi::drawHeaderBar (g, getLocalBounds(), 50, true);
 
-    // Accent line at bottom of header
-    g.setColour (kAccent);
-    g.fillRect (0, 47, w, 2);
+    // ── OMEGADARREN brand ────────────────────────────────────────────────────
+    PlateUi::drawBrandMark (g, { 14, 10, 140, 18 }, true);
 
-    // Plugin title — two-tone with gradient fill and emboss shadow
+    // Plugin title
     {
-        juce::Font titleFont ("Arial", 22.0f, juce::Font::bold);
+        juce::Font titleFont (20.0f, juce::Font::bold);
         g.setFont (titleFont);
-
         const juce::String wordA = "VOCAL";
         const juce::String wordB = " DOUBLER";
-        const int totalW = titleFont.getStringWidth (wordA + wordB);
-        const int startX = (w - totalW) / 2;
-        const int titleY = 0;
-        const int titleH = 48;
-        const int wA = titleFont.getStringWidth (wordA);
-
-        // Soft shadow pass (both words, offset 1px down)
-        g.setColour (juce::Colour (0, 0, 0).withAlpha (0.55f));
-        g.drawText (wordA + wordB, startX + 1, titleY + 2, totalW + 2, titleH,
-                    juce::Justification::centredLeft, false);
-
-        // "VOCAL" — slightly dimmed, standard weight feel
-        g.setColour (kTextMain.withAlpha (0.72f));
-        g.drawText (wordA, startX, titleY, wA, titleH,
-                    juce::Justification::centredLeft, false);
-
-        // "DOUBLER" — accent colour with a subtle glow pass behind it
-        g.setColour (kAccent.withAlpha (0.20f));
-        g.setFont (juce::Font ("Arial", 24.0f, juce::Font::bold));
-        g.drawText (wordB, startX + wA - 1, titleY, totalW - wA + 4, titleH,
-                    juce::Justification::centredLeft, false);
-        g.setColour (kAccent.brighter (0.25f));
-        g.setFont (titleFont);
-        g.drawText (wordB, startX + wA, titleY, totalW - wA + 2, titleH,
-                    juce::Justification::centredLeft, false);
+        float wA = titleFont.getStringWidthFloat (wordA);
+        float wB = titleFont.getStringWidthFloat (wordB);
+        float sx = (w - wA - wB) * 0.5f;
+        g.setColour (PlateUi::Theme::text().withAlpha (0.88f));
+        g.drawText (wordA, (int)sx, 15, (int)wA + 4, 20, juce::Justification::centredLeft, false);
+        juce::ColourGradient tGrad (PlateUi::Theme::accentBright(), sx + wA, 15.f,
+                                    PlateUi::Theme::accentDeep(),   sx + wA + wB, 35.f, false);
+        g.setGradientFill (tGrad);
+        g.drawText (wordB, (int)(sx + wA), 15, (int)wB + 4, 20, juce::Justification::centredLeft, false);
     }
 
-    // ── Logo icon — dual sine waves in a pill (top-right of header) ───────────
+    // Version
+    g.setFont (juce::Font (8.5f));
+    g.setColour (PlateUi::Theme::textDim().withAlpha (0.50f));
+    g.drawText ("v1.7", w - 52, 38, 40, 10, juce::Justification::centredRight, false);
+
+    // ── Zoom button (top-left of header) ─────────────────────────────────────
     {
-        const float ix = (float)(w - 46);
-        const float iy = 5.0f;
-        const float iw = 38.0f, ih = 38.0f;
-        const float icy = iy + ih * 0.5f;
-
-        // Background gradient
-        juce::ColourGradient ibg (
-            juce::Colour (10, 16, 30), ix,        iy,
-            juce::Colour (4,   8, 16), ix, iy + ih, false);
-        g.setGradientFill (ibg);
-        g.fillRoundedRectangle (ix, iy, iw, ih, 7.0f);
-
-        // Inner highlight top edge
-        g.setColour (juce::Colour (255, 255, 255).withAlpha (0.06f));
-        g.fillRoundedRectangle (ix + 1.0f, iy + 1.0f, iw - 2.0f, 1.5f, 0.75f);
-
-        // Border with accent glow
-        g.setColour (kAccent.withAlpha (0.35f));
-        g.drawRoundedRectangle (ix + 0.5f, iy + 0.5f, iw - 1.0f, ih - 1.0f, 6.5f, 1.0f);
-
-        // Clip wave paths to icon interior
-        g.saveState();
-        juce::Path clipR;
-        clipR.addRoundedRectangle (ix + 1.5f, iy + 1.5f, iw - 3.0f, ih - 3.0f, 6.0f);
-        g.reduceClipRegion (clipR);
-
-        // Build two sine wave paths (one full cycle each, phase offset for separation)
-        const int   kSteps = 64;
-        const float wPad   = 5.0f;
-        const float amp    = ih * 0.22f;
-
-        auto makeWave = [&] (float phase) -> juce::Path
-        {
-            juce::Path p;
-            for (int i = 0; i <= kSteps; ++i)
-            {
-                float t  = (float)i / (float)kSteps;
-                float wx = ix + wPad + t * (iw - wPad * 2.0f);
-                float wy = icy - amp * std::sin (t * juce::MathConstants<float>::twoPi + phase);
-                if (i == 0) p.startNewSubPath (wx, wy);
-                else        p.lineTo (wx, wy);
-            }
-            return p;
-        };
-
-        auto wave1 = makeWave (0.0f);     // V1 — blue
-        auto wave2 = makeWave (1.15f);    // V2 — amber, ~66 deg phase ahead
-
-        // Soft glow passes
-        g.setColour (juce::Colour (65, 145, 210).withAlpha (0.22f));
-        g.strokePath (wave1, juce::PathStrokeType (4.5f,
-            juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-        g.setColour (juce::Colour (210, 163, 65).withAlpha (0.22f));
-        g.strokePath (wave2, juce::PathStrokeType (4.5f,
-            juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-
-        // Crisp main lines
-        g.setColour (juce::Colour (65, 145, 210).withAlpha (0.92f));
-        g.strokePath (wave1, juce::PathStrokeType (1.7f,
-            juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-        g.setColour (juce::Colour (210, 163, 65).withAlpha (0.92f));
-        g.strokePath (wave2, juce::PathStrokeType (1.7f,
-            juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-
-        g.restoreState();
-    }
-
-    // Version — just left of logo icon
-    g.setFont (juce::Font (9.5f, juce::Font::bold));
-    g.setColour (kTextDim.withAlpha (0.70f));
-    g.drawText ("v1.7", w - 92, 34, 40, 12, juce::Justification::centredRight, false);
-
-    // ── Zoom button (top-left of header) ────────────────────────────────────
-    {
-        const bool hovered = zoomButtonBounds.contains (
-                                 getMouseXYRelative().toInt());
-        g.setColour (hovered ? kAccent.withAlpha (0.35f)
-                             : juce::Colour (0, 0, 0).withAlpha (0.30f));
-        g.fillRoundedRectangle (zoomButtonBounds.toFloat(), 5.0f);
-        g.setColour (hovered ? kTextMain : kTextDim);
-        g.drawRoundedRectangle (zoomButtonBounds.toFloat().reduced (0.5f), 5.0f, 1.0f);
-        g.setFont (juce::Font (10.0f, juce::Font::bold));
-        g.drawText (kZoomLabels[zoomIndex],
-                    zoomButtonBounds, juce::Justification::centred, false);
+        PlateUi::drawFloatingControl (g, zoomButtonBounds, kZoomLabels[zoomIndex], false);
     }
 
     // ── Tooltip toggle (pill + "Tool Tips" label to its right) ─────────────

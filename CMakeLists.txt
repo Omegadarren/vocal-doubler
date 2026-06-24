@@ -36,6 +36,7 @@ target_sources(VocalDoubler
     PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
+        Source/Ui/PlateLookAndFeel.cpp
 )
 
 target_compile_definitions(VocalDoubler

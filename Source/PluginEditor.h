@@ -1,6 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "Ui/PlateLookAndFeel.h"
 
 //==============================================================================
 class VocalDoublerAudioProcessorEditor : public juce::AudioProcessorEditor
@@ -29,6 +30,7 @@ private:
     std::unique_ptr<juce::Component> voiceDisplay;
 
     int zoomIndex = 0;
+    bool centred = false;
     static constexpr float kZoomFactors[]       = { 1.0f, 1.5f, 2.0f };
     static constexpr const char* kZoomLabels[]  = { "1x", "1.5x", "2x" };
     static constexpr int kBaseW = 540;

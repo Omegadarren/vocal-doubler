@@ -317,7 +317,7 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
     PlateUi::drawHeaderBar (g, getLocalBounds(), 50, true);
 
     // ── OMEGADARREN brand ────────────────────────────────────────────────────
-    PlateUi::drawBrandMark (g, { 84, 9, 130, 17 }, true);
+    PlateUi::drawBrandMark (g, { w - 156, 8, 130, 16 }, true);
 
     // Plugin title
     {
@@ -371,7 +371,7 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
             ? (float)tb.getRight()  - pad - tD
             : (float)tb.getX()      + pad;
         g.setColour (tooltipsEnabled ? juce::Colours::white.withAlpha (0.95f)
-                                     : juce::Colour (55, 70, 95));
+                                     : PlateUi::Theme::surfaceHighlight());
         g.fillEllipse (tX, (float)tb.getY() + pad, tD, tD);
         if (tooltipsEnabled)
         {
@@ -399,8 +399,8 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
 
         // Panel body gradient
         juce::ColourGradient panelBg (
-            juce::Colour (24, 25, 38), bx, by,
-            juce::Colour (14, 15, 24), bx, by + bh, false);
+            PlateUi::Theme::surface(),    bx, by,
+            PlateUi::Theme::background(), bx, by + bh, false);
         g.setGradientFill (panelBg);
         g.fillRoundedRectangle (bx, by, bw, bh, 8.0f);
 
@@ -445,8 +445,8 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
 
         // Panel bg
         juce::ColourGradient mBg (
-            juce::Colour (12, 13, 22), (float)px, (float)py,
-            juce::Colour (17, 18, 29), (float)px, (float)(py + ph), false);
+            PlateUi::Theme::backgroundDeep(), (float)px, (float)py,
+            PlateUi::Theme::background(),     (float)px, (float)(py + ph), false);
         g.setGradientFill (mBg);
         g.fillRect (gainReadoutBounds);
 
@@ -480,7 +480,7 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
         g.setColour (juce::Colour (0, 0, 0).withAlpha (0.7f));
         g.fillRoundedRectangle ((float)trackX - 1, (float)trackTop - 1,
                                 (float)trackW + 2, (float)trackH + 2, 3.0f);
-        g.setColour (juce::Colour (10, 10, 18));
+        g.setColour (PlateUi::Theme::backgroundDeep());
         g.fillRoundedRectangle ((float)trackX, (float)trackTop,
                                 (float)trackW, (float)trackH, 2.0f);
 
@@ -492,8 +492,8 @@ void VocalDoublerAudioProcessorEditor::paint (juce::Graphics& g)
         {
             bool isBoost = (norm > 0.0f);
             int  barY    = isBoost ? centerY - barPx : centerY;
-            juce::Colour barBase = isBoost ? juce::Colour (65, 145, 210)
-                                           : juce::Colour (60, 195, 100);
+            juce::Colour barBase = isBoost ? PlateUi::Theme::accentBright()
+                                           : juce::Colour (0xff52c890);
             g.setColour (barBase.withAlpha (0.22f));
             g.fillRoundedRectangle ((float)trackX - 2, (float)barY - 1,
                                     (float)trackW + 4, (float)barPx + 2, 2.0f);
